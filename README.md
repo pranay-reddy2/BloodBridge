@@ -208,6 +208,8 @@ Both images receive `APP_VERSION=<git sha>` at build time. It shows up as an OCI
 | Build | **images** (matrix: backend, frontend) — Buildx build with GHA cache → **Trivy image scan** → JSON report + CycloneDX SBOM artifacts → push to `ghcr.io/<owner>/bloodbridge-<service>:<sha>` | fixable HIGH/CRITICAL CVE in the image |
 | Deploy | **gitops** (main only) — `yq` writes the new SHA into `helm/bloodbridge/values-prod.yaml` and commits `deploy: bloodbridge <sha> [skip ci]` | — |
 
+![Green pipeline run](demo/screenshots/ci-cd-pipeline-run.png)
+
 Images are only pushed after every gate passes. They are tagged **only with the commit SHA**, never `latest`, so `commit → image → pod` is always traceable. The pipeline never holds cluster credentials: Argo CD pulls the change from Git (see §10).
 
 **One-time GitHub setup**

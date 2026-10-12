@@ -4,8 +4,9 @@ Put the two **mandatory** submission files here before you submit:
 
 | File | What |
 |---|---|
-| `presentation.mp4` | Screen recording — slides first, then the live walkthrough below |
-| `slides.pdf` (or `.pptx`) | At least 8 slides: overview, tech stack, architecture, CI/CD, infrastructure, Kubernetes, observability, key learnings |
+| `presentation.mp4` | Screen recording — slides first, then the live walkthrough below (**still to record**) |
+| [`presentation.pptx`](presentation.pptx) | 13 slides: problem, features, tech stack, architecture, CI/CD, pipeline screenshot, security, Terraform, Kubernetes/GitOps, observability, troubleshooting, learnings (speaker notes included) |
+| [`screenshots/ci-cd-pipeline-run.png`](screenshots/ci-cd-pipeline-run.png) | Green GitHub Actions run: tests → scans → images → GitOps deploy ([run #6](https://github.com/pranay-reddy2/BloodBridge/actions/runs/38284457781)) |
 
 > Videos over 100 MB cannot be pushed to GitHub normally — attach the MP4 to a **GitHub Release** instead, or use Git LFS.
 
