@@ -1,0 +1,19 @@
+# Least-privilege Argo CD project: this app may only deploy from its own repo into its own namespace.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: bloodbridge
+  namespace: argocd
+spec:
+  description: BloodBridge capstone
+  sourceRepos:
+    - https://github.com/pranay-reddy2/BloodBridge.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: bloodbridge
+  clusterResourceWhitelist: []          # no cluster-scoped resources
+  namespaceResourceBlacklist:
+    - group: ""
+      kind: ResourceQuota
+    - group: ""
+      kind: LimitRange

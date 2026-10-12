@@ -1,0 +1,40 @@
+# GitOps: Argo CD watches helm/bloodbridge on main and keeps the cluster in sync with it.
+# CI never talks to the cluster — it only commits new image tags to values-prod.yaml.
+#   kubectl apply -f argocd/application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bloodbridge
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io   # deleting the Application removes its resources
+spec:
+  project: bloodbridge
+  source:
+    repoURL: https://github.com/pranay-reddy2/BloodBridge.git
+    targetRevision: main
+    path: helm/bloodbridge
+    helm:
+      releaseName: bloodbridge
+      valueFiles:
+        - values-prod.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: bloodbridge
+  syncPolicy:
+    automated:
+      prune: true      # delete resources removed from Git
+      selfHeal: true   # revert manual kubectl edits (drift)
+    syncOptions:
+      - CreateNamespace=false   # created by k8s/namespace.yaml with Pod Security labels
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff: {duration: 10s, factor: 2, maxDuration: 3m}
+  # The HPA owns the backend's spec.replicas, so Argo CD must not fight it. (The frontend has
+  # a fixed replica count, so scaling it by hand is reverted by self-heal — a good demo.)
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: bloodbridge-backend
+      jsonPointers: [/spec/replicas]

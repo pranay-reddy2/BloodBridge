@@ -1,0 +1,10 @@
+# helm upgrade --install argocd argo/argo-cd -n argocd --create-namespace -f argocd/argocd-values.yaml
+configs:
+  params:
+    server.insecure: true   # TLS is terminated by kubectl port-forward in this demo
+  cm:
+    timeout.reconciliation: 60s   # poll Git every minute so the demo is snappy
+dex:
+  enabled: false
+notifications:
+  enabled: false
