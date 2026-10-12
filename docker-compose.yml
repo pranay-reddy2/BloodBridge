@@ -1,0 +1,46 @@
+# Full local stack:  docker compose up --build   ->  http://localhost:3000
+name: bloodbridge
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: bloodbridge
+      POSTGRES_USER: bloodbridge
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bloodbridge}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bloodbridge -d bloodbridge"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      args:
+        APP_VERSION: local
+    environment:
+      DATABASE_URL: postgresql+psycopg://bloodbridge:${POSTGRES_PASSWORD:-bloodbridge}@postgres:5432/bloodbridge
+      ENVIRONMENT: compose
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    environment:
+      BACKEND_UPSTREAM: backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:8080"
+
+volumes:
+  postgres-data:
