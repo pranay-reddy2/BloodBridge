@@ -104,7 +104,7 @@ module "eks" {
 # IAM role for the EBS CSI driver's service account (IRSA): it may create/attach EBS volumes, nothing else.
 module "ebs_csi_irsa" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "~> 5.55"
+  version = "~> 6.8"
 
   role_name             = "${local.name}-ebs-csi"
   attach_ebs_csi_policy = true
