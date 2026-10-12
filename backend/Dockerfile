@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---------- build stage: compile/install dependencies into an isolated virtualenv ----------
-FROM python:3.13-slim AS build
+FROM python:3.14-slim AS build
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
@@ -12,7 +12,7 @@ RUN pip install -r requirements.txt \
  && python -m pip uninstall -y pip
 
 # ---------- runtime stage: no compilers, no pip cache, non-root ----------
-FROM python:3.13-slim AS runtime
+FROM python:3.14-slim AS runtime
 ARG APP_VERSION=dev
 LABEL org.opencontainers.image.title="bloodbridge-backend" \
       org.opencontainers.image.description="BloodBridge FastAPI service" \
