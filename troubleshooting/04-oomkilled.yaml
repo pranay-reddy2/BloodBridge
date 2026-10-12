@@ -1,0 +1,24 @@
+# SCENARIO 4 — memory limit far below what the process needs.
+# Symptom: CrashLoopBackOff with "Last State: Terminated, Reason: OOMKilled, Exit Code: 137".
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lab-oom
+  namespace: bloodbridge
+  labels: {lab: troubleshooting}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: lab-oom}}
+  template:
+    metadata: {labels: {app: lab-oom, lab: troubleshooting}}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 65534, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: hungry
+          image: python:3.13-alpine
+          # Allocates ~200 MB of memory and holds it.
+          command: ["python", "-c", "import time; blob = bytearray(200 * 1024 * 1024); time.sleep(3600)"]
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}}
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {memory: 64Mi}        # <-- bug: 64 MiB limit for a 200 MB workload

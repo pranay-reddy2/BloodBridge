@@ -1,0 +1,24 @@
+# SCENARIO 3 — readiness probe pointed at the wrong port.
+# Symptom: pod is Running but READY 0/1 forever; it never receives traffic; no restarts.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lab-not-ready
+  namespace: bloodbridge
+  labels: {lab: troubleshooting}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: lab-not-ready}}
+  template:
+    metadata: {labels: {app: lab-not-ready, lab: troubleshooting}}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 101, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: web
+          image: nginxinc/nginx-unprivileged:stable-alpine
+          ports: [{containerPort: 8080}]
+          readinessProbe:
+            httpGet: {path: /, port: 80}   # <-- bug: nginx-unprivileged listens on 8080
+            periodSeconds: 5
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}}
+          resources: {requests: {cpu: 10m, memory: 16Mi}, limits: {memory: 64Mi}}
