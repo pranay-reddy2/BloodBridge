@@ -20,3 +20,7 @@ updates:
   - package-ecosystem: terraform
     directory: /terraform
     schedule: {interval: monthly}
+    # Major module versions (e.g. EKS v21) rename inputs; upgrade those deliberately, not via a bot PR.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
