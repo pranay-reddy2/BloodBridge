@@ -1,0 +1,15 @@
+# New EKS clusters no longer mark any StorageClass as default, so PVCs would stay Pending.
+# This makes encrypted gp3 EBS volumes (provisioned by the EBS CSI driver add-on) the default.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp3
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: "true"

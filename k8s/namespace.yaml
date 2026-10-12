@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bloodbridge
+  labels:
+    app.kubernetes.io/part-of: bloodbridge
+    # Pod Security Admission: block privileged pods outright, and warn/audit anything
+    # that is not fully "restricted" (every BloodBridge workload already is).
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted
