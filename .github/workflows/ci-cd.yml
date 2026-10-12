@@ -115,7 +115,7 @@ jobs:
       - name: terraform validate
         working-directory: terraform
         run: terraform validate
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
       - name: helm lint + render every environment
         run: |
           for values in values.yaml values-dev.yaml values-prod.yaml; do
