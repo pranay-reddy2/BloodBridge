@@ -6,7 +6,7 @@ app:
 backend:
   image:
     repository: ghcr.io/pranay-reddy2/bloodbridge-backend
-    tag: 467fe62676095330751dcbf3d54ec77eed4bd336
+    tag: 0304def5819cffa3b62357459eb04c102247020d
   autoscaling:
     enabled: true
     minReplicas: 2
@@ -14,7 +14,7 @@ backend:
 frontend:
   image:
     repository: ghcr.io/pranay-reddy2/bloodbridge-frontend
-    tag: 467fe62676095330751dcbf3d54ec77eed4bd336
+    tag: 0304def5819cffa3b62357459eb04c102247020d
   replicaCount: 2
 postgres:
   # Created once by hand, never committed:  see README "Create the database secret"
