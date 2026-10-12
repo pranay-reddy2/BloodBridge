@@ -233,6 +233,8 @@ Images are only pushed after every gate passes. They are tagged **only with the 
 
 **Reading a Trivy result** (for the M6 write-up): the image scan lists OS packages (Debian/Alpine) and language packages (pip wheels, Nginx modules) with CVE ID, severity, installed and fixed version. `--ignore-unfixed` hides CVEs that have no patched version yet, because there is nothing to act on. A clean run means *no known, fixable HIGH or CRITICAL vulnerability at build time*. It does not mean "secure forever", which is why Dependabot and rebuilds keep running.
 
+**A real finding from this project's first pipeline run:** the backend image scan failed with 4 HIGH vulnerabilities: `urllib3` 2.7.0 (CVE-2026-97687, CVE-2026-97689), `msgpack` 1.1.2 (GHSA-6v7p-g79w-8964) and `setuptools` 70.3.0 (CVE-2025-47273). None of them were BloodBridge dependencies. All four are libraries **vendored inside pip** (`pip/_vendor`), which both the `python:3.13-slim` base image and the virtualenv ship. The API never installs packages at runtime, so the fix was to uninstall pip and ensurepip from the runtime image instead of suppressing the CVEs. That also shrinks the attack surface. The gate did its job: no vulnerable image ever reached GHCR.
+
 ---
 
 ## 9. Terraform: AWS infrastructure

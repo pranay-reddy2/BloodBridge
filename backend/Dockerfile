@@ -6,7 +6,10 @@ ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+# pip is only needed to build the venv; its vendored libraries (urllib3, msgpack, setuptools)
+# carry their own CVEs, so it must not ship in the runtime image.
+RUN pip install -r requirements.txt \
+ && python -m pip uninstall -y pip
 
 # ---------- runtime stage: no compilers, no pip cache, non-root ----------
 FROM python:3.13-slim AS runtime
@@ -15,10 +18,13 @@ LABEL org.opencontainers.image.title="bloodbridge-backend" \
       org.opencontainers.image.description="BloodBridge FastAPI service" \
       org.opencontainers.image.revision="${APP_VERSION}"
 
-# Pull in Debian security fixes published after the base image was built.
+# Pull in Debian security fixes published after the base image was built, and remove the
+# base image's own pip/ensurepip: the API never installs packages at runtime.
 RUN apt-get update \
  && apt-get upgrade -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/* \
+ && python -m pip uninstall -y pip \
+ && rm -rf /usr/local/lib/python3.13/ensurepip /usr/local/bin/pip* \
  && useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin bloodbridge
 
 ENV PATH="/opt/venv/bin:$PATH" \
