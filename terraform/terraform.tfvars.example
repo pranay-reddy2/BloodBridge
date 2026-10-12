@@ -1,0 +1,17 @@
+# Copy to terraform.tfvars and adjust. terraform.tfvars is git-ignored.
+# AWS credentials are NEVER put here — use `aws configure` / `aws sso login` / environment variables.
+
+aws_region         = "ap-south-1"
+project            = "bloodbridge"
+environment        = "dev"
+owner              = "your-name"
+kubernetes_version = "1.34"
+
+node_instance_types = ["t3.medium"]
+node_capacity_type  = "ON_DEMAND" # or "SPOT" to save money
+node_min_size       = 2
+node_desired_size   = 2
+node_max_size       = 4
+
+# Lock the Kubernetes API down to your own public IP: curl -s https://checkip.amazonaws.com
+cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
