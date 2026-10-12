@@ -153,7 +153,7 @@ jobs:
       - name: Image name (GHCR requires lowercase)
         run: echo "IMAGE=${REGISTRY}/${GITHUB_REPOSITORY_OWNER,,}/bloodbridge-${{ matrix.service }}" >> "$GITHUB_ENV"
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       - name: Build image (tag = commit SHA)
         uses: docker/build-push-action@v6
