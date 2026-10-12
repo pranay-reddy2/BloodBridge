@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "bloodbridge.fullname" . }}-config
+  labels: {{- include "bloodbridge.labels" (dict "ctx" . "component" "backend") | nindent 4 }}
+data:
+  ENVIRONMENT: {{ .Values.app.environment | quote }}
+  LOW_STOCK_THRESHOLD: {{ .Values.app.lowStockThreshold | quote }}
+  DONATION_INTERVAL_DAYS: {{ .Values.app.donationIntervalDays | quote }}
+  EXPIRING_SOON_DAYS: {{ .Values.app.expiringSoonDays | quote }}
+  DB_HOST: {{ include "bloodbridge.dbHost" . | quote }}
+  DB_PORT: {{ .Values.postgres.port | quote }}
+  DB_NAME: {{ .Values.postgres.database | quote }}

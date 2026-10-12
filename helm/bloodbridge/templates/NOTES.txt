@@ -1,0 +1,19 @@
+BloodBridge {{ .Values.backend.image.tag | default .Chart.AppVersion }} deployed to namespace {{ .Release.Namespace }}.
+
+  kubectl get pods,svc,ingress,hpa -n {{ .Release.Namespace }}
+  helm test {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+{{- if .Values.ingress.enabled }}
+{{- if .Values.ingress.host }}
+
+Open: http://{{ .Values.ingress.host }}/   (API docs are not exposed; use port-forward below)
+{{- else }}
+
+Find the public address of the ingress controller:
+  kubectl get svc -n traefik traefik -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+{{- end }}
+{{- end }}
+
+API docs (Swagger):
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "bloodbridge.fullname" . }}-backend 8000:8000
+  open http://localhost:8000/docs

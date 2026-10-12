@@ -1,0 +1,15 @@
+{{- range $component := list "backend" "frontend" }}
+{{- $cfg := index $.Values $component }}
+{{- if $cfg.pdb.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "bloodbridge.fullname" $ }}-{{ $component }}
+  labels: {{- include "bloodbridge.labels" (dict "ctx" $ "component" $component) | nindent 4 }}
+spec:
+  minAvailable: {{ $cfg.pdb.minAvailable }}
+  selector:
+    matchLabels: {{- include "bloodbridge.selectorLabels" (dict "ctx" $ "component" $component) | nindent 6 }}
+{{- end }}
+{{- end }}

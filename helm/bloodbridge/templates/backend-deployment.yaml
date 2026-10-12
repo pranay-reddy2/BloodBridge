@@ -1,0 +1,79 @@
+{{- $c := dict "ctx" . "component" "backend" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bloodbridge.fullname" . }}-backend
+  labels: {{- include "bloodbridge.labels" $c | nindent 4 }}
+spec:
+  {{- if not .Values.backend.autoscaling.enabled }}
+  replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  selector:
+    matchLabels: {{- include "bloodbridge.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "bloodbridge.labels" $c | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels: {{- include "bloodbridge.selectorLabels" $c | nindent 20 }}
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: backend
+          image: {{ include "bloodbridge.image" (dict "ctx" . "image" .Values.backend.image) | quote }}
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - {name: http, containerPort: 8000}
+          envFrom:
+            - configMapRef:
+                name: {{ include "bloodbridge.fullname" . }}-config
+          env:
+            - name: APP_VERSION
+              value: {{ default .Chart.AppVersion .Values.backend.image.tag | quote }}
+            - name: DB_USER
+              valueFrom: {secretKeyRef: {name: {{ include "bloodbridge.dbSecret" . }}, key: username}}
+            - name: DB_PASSWORD
+              valueFrom: {secretKeyRef: {name: {{ include "bloodbridge.dbSecret" . }}, key: password}}
+            # Kubernetes expands $(VAR) from variables defined earlier in this list.
+            - name: DATABASE_URL
+              value: "postgresql+psycopg://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
+          startupProbe:          # migrations run before Uvicorn starts; give them time
+            httpGet: {path: /health, port: http}
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:        # in rotation only while PostgreSQL is reachable
+            httpGet: {path: /ready, port: http}
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:         # restart only if the process itself is wedged
+            httpGet: {path: /health, port: http}
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 4
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+          securityContext: {{- include "bloodbridge.containerSecurity" . | nindent 12 }}
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: tmp
+          emptyDir: {}

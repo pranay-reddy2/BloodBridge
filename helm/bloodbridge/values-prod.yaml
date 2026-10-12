@@ -1,0 +1,26 @@
+# EKS deployment managed by Argo CD (argocd/application.yaml).
+# The image repository/tag fields below are rewritten by the CI pipeline on every
+# push to main — that commit is what Argo CD syncs to the cluster (GitOps).
+app:
+  environment: production
+backend:
+  image:
+    repository: ghcr.io/pranay-reddy2/bloodbridge-backend
+    tag: latest-placeholder
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+frontend:
+  image:
+    repository: ghcr.io/pranay-reddy2/bloodbridge-frontend
+    tag: latest-placeholder
+  replicaCount: 2
+postgres:
+  # Created once by hand, never committed:  see README "Create the database secret"
+  existingSecret: bloodbridge-db
+  storage:
+    size: 5Gi
+    storageClassName: gp3
+ingress:
+  host: ""

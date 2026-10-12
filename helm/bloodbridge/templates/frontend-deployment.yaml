@@ -1,0 +1,63 @@
+{{- $c := dict "ctx" . "component" "frontend" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bloodbridge.fullname" . }}-frontend
+  labels: {{- include "bloodbridge.labels" $c | nindent 4 }}
+spec:
+  {{- if not .Values.frontend.autoscaling.enabled }}
+  replicas: {{ .Values.frontend.replicaCount }}
+  {{- end }}
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  selector:
+    matchLabels: {{- include "bloodbridge.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "bloodbridge.labels" $c | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile: {type: RuntimeDefault}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels: {{- include "bloodbridge.selectorLabels" $c | nindent 20 }}
+      containers:
+        - name: frontend
+          image: {{ include "bloodbridge.image" (dict "ctx" . "image" .Values.frontend.image) | quote }}
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          ports:
+            - {name: http, containerPort: 8080}
+          env:
+            - name: BACKEND_UPSTREAM
+              value: {{ include "bloodbridge.backendUrl" . | quote }}
+          readinessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 20
+          resources: {{- toYaml .Values.frontend.resources | nindent 12 }}
+          securityContext: {{- include "bloodbridge.containerSecurity" . | nindent 12 }}
+          volumeMounts:
+            # nginx renders its config from a template at start-up and needs scratch space
+            - {name: tmp, mountPath: /tmp}
+            - {name: nginx-conf, mountPath: /etc/nginx/conf.d}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: nginx-conf
+          emptyDir: {}

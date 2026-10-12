@@ -1,0 +1,53 @@
+{{- if .Values.monitoring.prometheusRule.enabled }}
+{{- $ns := .Release.Namespace -}}
+{{- $svc := printf "%s-backend" (include "bloodbridge.fullname" .) -}}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "bloodbridge.fullname" . }}
+  labels:
+    {{- include "bloodbridge.labels" (dict "ctx" . "component" "backend") | nindent 4 }}
+    {{- with .Values.monitoring.prometheusRule.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: bloodbridge.availability
+      rules:
+        - alert: BloodBridgeBackendDown
+          expr: sum(up{namespace="{{ $ns }}", service="{{ $svc }}"}) == 0
+          for: 2m
+          labels: {severity: critical}
+          annotations:
+            summary: No BloodBridge backend pod is being scraped successfully
+            runbook: troubleshooting/RUNBOOK.md
+        - alert: BloodBridgeHighErrorRate
+          expr: |
+            sum(rate(http_requests_total{namespace="{{ $ns }}", status=~"5.."}[5m]))
+              / clamp_min(sum(rate(http_requests_total{namespace="{{ $ns }}"}[5m])), 1e-9) > 0.05
+          for: 5m
+          labels: {severity: warning}
+          annotations:
+            summary: More than 5% of BloodBridge API requests are failing
+        - alert: BloodBridgeSlowRequests
+          expr: |
+            histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{namespace="{{ $ns }}"}[5m]))) > 1
+          for: 10m
+          labels: {severity: warning}
+          annotations:
+            summary: BloodBridge p95 latency is above 1 second
+    - name: bloodbridge.inventory
+      rules:
+        - alert: BloodBridgeLowStock
+          expr: max by (blood_group) (bloodbridge_inventory_available_units{namespace="{{ $ns }}"}) < {{ .Values.app.lowStockThreshold }}
+          for: 10m
+          labels: {severity: warning}
+          annotations:
+            summary: {{ `Blood group {{ $labels.blood_group }} has only {{ $value }} usable units` }}
+        - alert: BloodBridgeCriticalRequestWaiting
+          expr: max(bloodbridge_requests_open{namespace="{{ $ns }}", urgency="CRITICAL"}) > 0
+          for: 15m
+          labels: {severity: critical}
+          annotations:
+            summary: A CRITICAL hospital request has been open for more than 15 minutes
+{{- end }}

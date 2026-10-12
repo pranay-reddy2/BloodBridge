@@ -1,0 +1,28 @@
+# `helm test bloodbridge -n bloodbridge` — verifies the API is Ready (DB reachable) and the UI is served.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "bloodbridge.fullname" . }}-smoke-test
+  labels: {{- include "bloodbridge.labels" (dict "ctx" . "component" "test") | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    seccompProfile: {type: RuntimeDefault}
+  containers:
+    - name: smoke
+      image: {{ .Values.toolsImage }}
+      command:
+        - sh
+        - -c
+        - |
+          set -e
+          wget -qO- http://{{ include "bloodbridge.backendUrl" . }}/ready
+          wget -qO- http://{{ include "bloodbridge.backendUrl" . }}/api/inventory/summary > /dev/null
+          wget -qO- http://{{ include "bloodbridge.fullname" . }}-frontend/healthz
+          echo "BloodBridge smoke test passed"
+      securityContext: {{- include "bloodbridge.containerSecurity" . | nindent 8 }}

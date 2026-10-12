@@ -1,0 +1,17 @@
+# Local cluster (kind / minikube / Docker Desktop):
+#   helm upgrade --install bloodbridge ./helm/bloodbridge -n bloodbridge --create-namespace -f helm/bloodbridge/values-dev.yaml
+app:
+  environment: dev
+backend:
+  autoscaling:
+    enabled: false
+  replicaCount: 1
+  pdb: {enabled: false}
+frontend:
+  replicaCount: 1
+  pdb: {enabled: false}
+postgres:
+  storage:
+    size: 1Gi
+ingress:
+  host: bloodbridge.local

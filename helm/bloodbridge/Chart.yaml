@@ -1,0 +1,9 @@
+apiVersion: v2
+name: bloodbridge
+description: BloodBridge — blood donor registry, inventory and hospital request fulfilment (FastAPI + React + PostgreSQL)
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords: [fastapi, react, postgresql, healthcare]
+maintainers:
+  - name: Pranay Reddy N

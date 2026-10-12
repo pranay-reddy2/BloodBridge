@@ -1,0 +1,102 @@
+# Default values (safe for a local/kind cluster). Environment overrides live in
+# values-dev.yaml and values-prod.yaml; CI rewrites the image tags in values-prod.yaml.
+
+nameOverride: ""
+fullnameOverride: ""
+imagePullSecrets: []   # e.g. [{name: ghcr-pull}] if your GHCR packages are private
+
+app:
+  environment: production
+  lowStockThreshold: 5
+  donationIntervalDays: 90
+  expiringSoonDays: 7
+
+backend:
+  image:
+    repository: ghcr.io/pranay-reddy2/bloodbridge-backend
+    tag: ""            # defaults to .Chart.AppVersion; CI sets this to the Git commit SHA
+    pullPolicy: IfNotPresent
+  replicaCount: 2      # ignored while autoscaling is enabled (the HPA owns the replica count)
+  resources:
+    requests: {cpu: 100m, memory: 192Mi}
+    limits: {cpu: 500m, memory: 384Mi}
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 60
+  pdb:
+    enabled: true
+    minAvailable: 1
+
+frontend:
+  image:
+    repository: ghcr.io/pranay-reddy2/bloodbridge-frontend
+    tag: ""
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  resources:
+    requests: {cpu: 50m, memory: 64Mi}
+    limits: {cpu: 200m, memory: 128Mi}
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 70
+  pdb:
+    enabled: true
+    minAvailable: 1
+
+postgres:
+  # In-cluster PostgreSQL StatefulSet for the capstone. For real production point
+  # `host` at Amazon RDS and set enabled: false.
+  enabled: true
+  image: postgres:17-alpine
+  host: ""             # defaults to the in-cluster service name
+  port: 5432
+  database: bloodbridge
+  # Either reference a pre-created Secret with `username` and `password` keys (recommended:
+  # keeps credentials out of Git) or let the chart create one from the two values below.
+  existingSecret: ""
+  username: bloodbridge
+  password: bloodbridge-dev-only
+  storage:
+    size: 5Gi
+    storageClassName: ""   # "" = cluster default (k8s/storageclass-gp3.yaml on EKS)
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {cpu: "1", memory: 512Mi}
+
+ingress:
+  enabled: true
+  className: traefik
+  host: ""             # "" matches any host, so the cloud load balancer's DNS name works as-is
+  annotations: {}
+  tls:
+    enabled: false
+    secretName: ""
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+    interval: 15s
+    labels:
+      release: kube-prometheus-stack
+  prometheusRule:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
+  grafanaDashboard:
+    enabled: true
+
+# Daily job that marks stock past its expiry date as EXPIRED via the API.
+expirySweep:
+  enabled: true
+  schedule: "15 0 * * *"
+
+# Only backend pods may open connections to PostgreSQL (enforced when the CNI supports
+# NetworkPolicy, e.g. VPC CNI with enableNetworkPolicy=true — see terraform/main.tf).
+networkPolicy:
+  enabled: true
+
+toolsImage: busybox:1.37

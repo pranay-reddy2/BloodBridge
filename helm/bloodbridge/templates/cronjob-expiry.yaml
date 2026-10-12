@@ -1,0 +1,32 @@
+{{- if .Values.expirySweep.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "bloodbridge.fullname" . }}-expiry-sweep
+  labels: {{- include "bloodbridge.labels" (dict "ctx" . "component" "expiry-sweep") | nindent 4 }}
+spec:
+  schedule: {{ .Values.expirySweep.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels: {{- include "bloodbridge.selectorLabels" (dict "ctx" . "component" "expiry-sweep") | nindent 12 }}
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            seccompProfile: {type: RuntimeDefault}
+          containers:
+            - name: sweep
+              image: {{ .Values.toolsImage }}
+              command: ["wget", "-qO-", "--post-data=", "http://{{ include "bloodbridge.backendUrl" . }}/api/units/expire-sweep"]
+              resources:
+                requests: {cpu: 10m, memory: 16Mi}
+                limits: {cpu: 50m, memory: 32Mi}
+              securityContext: {{- include "bloodbridge.containerSecurity" . | nindent 16 }}
+{{- end }}
