@@ -1,0 +1,47 @@
+# helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+#   -n monitoring --create-namespace -f monitoring/kube-prometheus-stack-values.yaml
+#
+# Installs Prometheus Operator, Prometheus, Alertmanager, Grafana, kube-state-metrics and node-exporter.
+
+prometheus:
+  prometheusSpec:
+    # Discover ServiceMonitors / PrometheusRules in every namespace, not just ones
+    # labelled for this Helm release.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    serviceMonitorNamespaceSelector: {}
+    ruleNamespaceSelector: {}
+    retention: 3d
+    resources:
+      requests: {cpu: 200m, memory: 512Mi}
+      limits: {memory: 1Gi}
+
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      requests: {cpu: 20m, memory: 64Mi}
+
+grafana:
+  enabled: true
+  # Demo credential only. For anything shared, create a Secret and use grafana.admin.existingSecret.
+  adminPassword: bloodbridge-admin
+  defaultDashboardsTimezone: browser
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL   # load the dashboard ConfigMap shipped in the bloodbridge Helm chart
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+
+# EKS manages these control-plane components; Prometheus cannot scrape them.
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false

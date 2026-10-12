@@ -1,0 +1,21 @@
+# Ingress controller. (ingress-nginx was retired by the Kubernetes project in March 2026, so this
+# project uses Traefik, which implements the standard networking.k8s.io/v1 Ingress API.)
+#   helm upgrade --install traefik traefik/traefik -n traefik --create-namespace -f monitoring/traefik-values.yaml
+deployment:
+  replicas: 2
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+  name: traefik
+service:
+  type: LoadBalancer   # EKS provisions an AWS load balancer in the public subnets
+providers:
+  kubernetesIngress:
+    publishedService:
+      enabled: true    # writes the LB hostname into Ingress .status so `kubectl get ingress` shows it
+metrics:
+  prometheus:
+    serviceMonitor:
+      enabled: true
+resources:
+  requests: {cpu: 50m, memory: 64Mi}
