@@ -1,0 +1,4 @@
+# Accepted vulnerabilities, one CVE ID per line, each with a justification and review date.
+# Keep this file empty unless a finding has no fix and has been risk-assessed.
+# Example:
+# CVE-2099-00000  # not reachable: affects a CLI tool not used at runtime; review 2026-12-01

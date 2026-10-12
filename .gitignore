@@ -1,0 +1,48 @@
+# Secrets and local config
+.env
+*.env
+!.env.example
+*.pem
+*.key
+kubeconfig*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+junit.xml
+*.db
+
+# Node
+node_modules/
+dist/
+.vite/
+npm-debug.log*
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+terraform.tfvars
+!terraform.tfvars.example
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+*.log
+
+# Trivy reports produced locally
+trivy-*.json
+trivy-*.sarif
+
+# Local tool state
+.claude/
