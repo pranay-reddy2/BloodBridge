@@ -4,7 +4,7 @@ Put the two **mandatory** submission files here before you submit:
 
 | File | What |
 |---|---|
-| `presentation.mp4` | Screen recording — slides first, then the live walkthrough below (**still to record**) |
+| [`presentation.mp4`](presentation.mp4) | Capstone walkthrough video (11m 25s, 1080p Full HD) covering slides, architecture, CI/CD, and failure drills |
 | [`presentation.pptx`](presentation.pptx) | 13 slides: problem, features, tech stack, architecture, CI/CD, pipeline screenshot, security, Terraform, Kubernetes/GitOps, observability, troubleshooting, learnings (speaker notes included) |
 | [`screenshots/ci-cd-pipeline-run.png`](screenshots/ci-cd-pipeline-run.png) | Green GitHub Actions run: tests → scans → images → GitOps deploy ([run #6](https://github.com/pranay-reddy2/BloodBridge/actions/runs/38284457781)) |
 
